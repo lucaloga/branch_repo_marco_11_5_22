@@ -112,13 +112,13 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
 
-broker = "10.0.1.8"
-port = 1883
+broker = "192.168.3.70"
+port =51885
 topic = "zigbee2mqtt/+"
 # generate client ID with pub prefix randomly
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
-username = 'mqtt'
-password = 'mqtt12'
+username = 'flaconedimatera'
+password = 'mercedesbenz'
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
