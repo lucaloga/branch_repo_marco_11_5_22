@@ -11,11 +11,14 @@ import json
 import logging
 import random
 import time
+import threading
+
 
 import paho.mqtt.client as mqtt
 from sqlalchemy import null
 import websocket
 import yaml
+
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, HomeAssistant
@@ -23,23 +26,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-
-file = open(r"config/gateway_conf.yaml", encoding="utf8")
-
-
-def any_constructor(loader, tag_suffix, node):
-    if isinstance(node, yaml.MappingNode):
-        return loader.construct_mapping(node)
-    if isinstance(node, yaml.SequenceNode):
-        return loader.construct_sequence(node)
-    return loader.construct_scalar(node)
-
-
-yaml.add_multi_constructor("", any_constructor, Loader=yaml.SafeLoader)
-configuration = yaml.safe_load(file)
-print(configuration)
-
-# configEntity = yaml.full_load(open("config/configuration.yaml", "r"))
 
 from .api import FreehandsApiClient
 
@@ -139,6 +125,24 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await async_setup_entry(hass, entry)
 
 
+file = open(r"config/gateway_conf.yaml", encoding="utf8")
+
+
+def any_constructor(loader, tag_suffix, node):
+    if isinstance(node, yaml.MappingNode):
+        return loader.construct_mapping(node)
+    if isinstance(node, yaml.SequenceNode):
+        return loader.construct_sequence(node)
+    return loader.construct_scalar(node)
+
+
+yaml.add_multi_constructor("", any_constructor, Loader=yaml.SafeLoader)
+configuration = yaml.safe_load(file)
+print(configuration)
+
+# configEntity = yaml.full_load(open("config/configuration.yaml", "r"))
+
+
 # generate client ID with pub prefix randomly
 clientToFreeHands_id = f"freehands-mqtt-{random.randint(0, 1000)}"
 
@@ -193,6 +197,7 @@ def on_publish(client, userdata, result):
 
 
 ############# BROKER FUNCTIONS ####################
+
 
 ############# WS FUNCTIONS ####################
 
@@ -273,11 +278,18 @@ def on_closews(ws, close_status_code, close_msg):
 
 def on_openws(ws):
     ws.send(
-        json.dumps(configuration["LoginToWs"])
+        json.dumps(
+            {
+                "type": "auth",
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI5NGQ4ZDMwYWMzNzQ0MDhkODM4YzZjNTY3MzFmNDhlYSIsImlhdCI6MTY1MDUzMTU5MiwiZXhwIjoxOTY1ODkxNTkyfQ.wGqiJhLJ_2YHgbuyC96iAM4K5v20L-1KYJJhVmRUCKA",
+            }
+        )
     )  # json.dumps({"type": "auth","access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI5NGQ4ZDMwYWMzNzQ0MDhkODM4YzZjNTY3MzFmNDhlYSIsImlhdCI6MTY1MDUzMTU5MiwiZXhwIjoxOTY1ODkxNTkyfQ.wGqiJhLJ_2YHgbuyC96iAM4K5v20L-1KYJJhVmRUCKA",})
     print("Auth effettuato")
     ws.send(
-        json.dumps(EventsSub)
+        json.dumps(
+            {"id": 18, "type": "subscribe_events", "event_type": "state_changed"}
+        )
     )  # json.dumps({"id": 18, "type": "subscribe_events", "event_type": "state_changed"})
     print("Sottoscrizione agli eventi effetuata")
     print("connected")
@@ -297,10 +309,11 @@ def connectToBroker():
         on_error=on_errorws,
         on_close=on_closews,
     )
-    ws.run_forever()
+    wst = threading.Thread(target=ws.run_forever)
+    wst.daemon = True
+    wst.start()
+    print("luca è stronzo")
 
-
-############# CONNECTIONS ####################
 
 client1 = mqtt.Client(
     client_id=clientToFreeHands_id,
@@ -332,5 +345,3 @@ client1.connect(client1.broker, client1.port, client1.keepalive)
 client1.loop_start()
 
 connectToBroker()
-
-# connectToFreehands()
