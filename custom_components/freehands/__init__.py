@@ -125,7 +125,7 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await async_setup_entry(hass, entry)
 
 
-file = open(r"config/gateway_conf.yaml", encoding="utf8")
+file = open(r"/config/gateway_conf.yaml", encoding="utf8")
 
 
 def any_constructor(loader, tag_suffix, node):
@@ -140,7 +140,7 @@ yaml.add_multi_constructor("", any_constructor, Loader=yaml.SafeLoader)
 configuration = yaml.safe_load(file)
 print(configuration)
 
-# configEntity = yaml.full_load(open("config/configuration.yaml", "r"))
+
 
 
 # generate client ID with pub prefix randomly
@@ -284,13 +284,13 @@ def on_openws(ws):
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI5NGQ4ZDMwYWMzNzQ0MDhkODM4YzZjNTY3MzFmNDhlYSIsImlhdCI6MTY1MDUzMTU5MiwiZXhwIjoxOTY1ODkxNTkyfQ.wGqiJhLJ_2YHgbuyC96iAM4K5v20L-1KYJJhVmRUCKA",
             }
         )
-    )  # json.dumps({"type": "auth","access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI5NGQ4ZDMwYWMzNzQ0MDhkODM4YzZjNTY3MzFmNDhlYSIsImlhdCI6MTY1MDUzMTU5MiwiZXhwIjoxOTY1ODkxNTkyfQ.wGqiJhLJ_2YHgbuyC96iAM4K5v20L-1KYJJhVmRUCKA",})
+    )
     print("Auth effettuato")
     ws.send(
         json.dumps(
             {"id": 18, "type": "subscribe_events", "event_type": "state_changed"}
         )
-    )  # json.dumps({"id": 18, "type": "subscribe_events", "event_type": "state_changed"})
+    )
     print("Sottoscrizione agli eventi effetuata")
     print("connected")
 
@@ -322,22 +322,20 @@ client1 = mqtt.Client(
     protocol=mqtt.MQTTv31,
     transport="tcp",
 )
-# client1.username_pw_set("pippo", "pluto")
+
 client1.username_pw_set(
     configuration["username_broker_freehands"], configuration["password"]
 )
-# client1.username_pw_set(
-#     FreehandsConfiguration["Username"], FreehandsConfiguration["Password"]
-# )
+
 client1.on_connect = on_connectToFreehands
 client1.on_message = on_message
 client1.on_publish = on_publish
 client1.broker = configuration[
     "ip_broker_freehands"
-]  # FreehandsConfiguration["Mqtt_ip"]
+] 
 client1.port = configuration[
     "port_broker_freehands"
-]  # FreehandsConfiguration["Mqtt_port"]
+] 
 client1.topic = "#"
 client1.keepalive = 60
 
